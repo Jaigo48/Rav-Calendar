@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30-Day Restaurant Social Media Warm-Up Calendar</title>
+    <style>
+        :root {
+            --bg-main: #f7f4ef;
+            --text-main: #26323b;
+            --instagram: #b7dcd0;
+            --tiktok: #f4c7c3;
+            --facebook: #c7d3f2;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        /* Gatekeeper Modal & Overlay Architecture */
+        .gatekeeper-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(38, 50, 59, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .gatekeeper-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .gatekeeper-card {
+            background-color: var(--bg-main);
+            padding: 35px;
+            border-radius: 16px;
+            max-width: 550px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            border: 1px solid rgba(38, 50, 59, 0.1);
+        }
+
+        .gatekeeper-card h1 {
+            font-size: 1.8rem;
+            margin-top: 0;
+            color: var(--text-main);
+            font-weight: 800;
+        }
+
+        .gatekeeper-card p {
+            font-size: 1rem;
+            color: var(--text-main);
+            margin: 20px 0 30px 0;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .gatekeeper-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s ease, filter 0.2s ease;
+        }
+
+        .btn:hover {
+            filter: brightness(0.95);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-engage {
+            background-color: var(--instagram);
+            color: var(--text-main);
+        }
+
+        .btn-secondary {
+            background-color: rgba(38, 50, 59, 0.08);
+            color: var(--text-main);
+        }
+
+        /* Proof of Concept Detail Modal Styles */
+        .preview-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(38, 50, 59, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .preview-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .preview-modal-card {
+            background-color: var(--bg-main);
+            border-radius: 16px;
+            max-width: 650px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 48px rgba(38, 50, 59, 0.2);
+            border: 1px solid rgba(38, 50, 59, 0.15);
+            padding: 30px;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-main);
+            opacity: 0.5;
+        }
+
+        .modal-close-btn:hover { opacity: 1; }
+
+        .modal-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(38, 50, 59, 0.08);
+        }
+
+        .modal-section h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+        }
+
+        .modal-copy-box {
+            background-color: rgba(38, 50, 59, 0.04);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            border-left: 3px solid var(--instagram);
+            margin: 5px 0;
+        }
+
+        /* Clickable State Indicators */
+        .interactive-trigger {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+
+        .interactive-trigger:hover {
+            background-color: rgba(183, 220, 208, 0.25) !important;
+        }
+
+        .pulse-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: var(--instagram);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            animation: previewPulse 2s infinite ease-in-out;
+        }
+
+        @keyframes previewPulse {
+            0% { opacity: 0.6; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.6; transform: scale(0.98); }
+        }
+
+        /* Calendar Layout Structure */
+        .calendar-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1.main-title {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            font-weight: 800;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        /* Interactive View Controller Buttons */
+        .view-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .btn-toggle {
+            background-color: rgba(38, 50, 59, 0.05);
+            color: var(--text-main);
+            border: 1px solid rgba(38, 50, 59, 0.1);
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn-toggle.active {
+            background-color: var(--text-main);
+            color: var(--bg-main);
+            border-color: var(--text-main);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: rgba(38, 50, 59, 0.04);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        /* 30-Day Grid Layout View Architecture */
+        .grid-view-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .grid-day-card {
+            background-color: rgba(38, 50, 59, 0.03);
+            border: 1px solid rgba(38, 50, 59, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-day-number {
+            font-size: 0.85rem;
+            font-weight: 800;
+            opacity: 0.6;
+            margin-bottom: 6px;
+        }
+
+        .grid-day-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: auto;
+        }
+
+        .grid-platform-ribbons {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .ribbon {
+            height: 6px;
+            flex: 1;
+            border-radius: 3px;
+        }
+
+        /* Color Striping Rules for the 30-Day View Grid */
+        .card-ig-tt .ribbon-ig { background-color: var(--instagram); }
+        .card-ig-tt .ribbon-tt { background-color: var(--tiktok); }
+        
+        .card-ig-fb .ribbon-ig { background-color: var(--instagram); }
+        .card-ig-fb .ribbon-fb { background-color: var(--facebook); }
+        
+        .card-tt-only .ribbon-tt { background-color: var(--tiktok); }
+        .card-ig-only .ribbon-ig { background-color: var(--instagram); }
+        .card-fb-only .ribbon-fb { background-color: var(--facebook); }
+
+        /* Original List-View Structures */
+        .week-title {
+            font-size: 1.4rem;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            border-bottom: 2px solid rgba(38, 50, 59, 0.1);
+            padding-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: transparent;
+        }
+
+        th {
+            background-color: rgba(38, 50, 59, 0.08);
+            text-align: left;
+  padding: 12px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(38, 50, 59, 0.1);
+            vertical-align: middle;
+            font-size: 0.95rem;
+        }
+
+        td.day-cell { font-weight: 700; width: 8%; }
+        td.platform-cell { width: 18%; }
+        td.idea-cell { font-weight: 600; width: 44%; }
+        td.target-cell { width: 30%; font-size: 0.85rem; opacity: 0.9; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+
+        .badge-ig { background-color: var(--instagram); }
+        .badge-tt { background-color: var(--tiktok); }
+        .badge-fb { background-color: var(--facebook); }
+
+        @media (max-width: 900px) {
+            .grid-view-container { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        @media (max-width: 600px) {
+            .grid-view-container { grid-template-columns: repeat(2, 1fr); }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            tr { margin-bottom: 15px; border-bottom: 2px solid rgba(38, 50, 59, 0.1); padding-bottom: 10px; }
+            td { border: none; padding: 6px 0; width: 100% !important; }
+            td.day-cell { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+  <!-- Pre-Access Algorithm Gateway Modal -->
+  <div class="gatekeeper-overlay" id="gatekeeperOverlay">
+    <div class="gatekeeper-card">
+      <h1>⚠️ Algorithm Safety Check</h1>
+      <p>
+        Do not just post your idea and leave! The algorithm demands <strong>Active Engagement Window</strong>: Spend 15 minutes before and after you post interacting with your local city geotags, replying to older comments, and engaging with local micro-influencers to index your new content first.
+      </p>
+      <div class="gatekeeper-actions">
+        <button class="btn btn-engage" id="gatekeeperEngagedBtn">Engaged</button>
+        <button class="btn btn-secondary" id="gatekeeperLaterBtn">Engage Later</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Interactive Day 1 Deep-Dive Strategy Preview Modal -->
+  <div class="preview-modal-overlay" id="dayOneModal">
+    <div class="preview-modal-card">
+        <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+        <h2>🔥 Day 1 Strategy Asset Blueprint</h2>
+        <p style="margin-top:0; opacity:0.7; font-size:0.9rem; font-weight:600;">Asset Target: The "ASMR Sauce Pour" | Vertical Video Loop (9:16)</p>
+        
+        <div class="modal-section">
+            <h3>🪝 Stop-Scroll Hook Variation (Text on Screen)</h3>
+            <div class="modal-copy-box">"If our chef catches you watching this, we're both in trouble... 🤫"</div>
+        </div>
+
+        <div class="modal-section">
+            <h3>&#128221; Performance Caption Template</h3>
+            <div class="modal-copy-box" style="white-space: pre-line;">
+                The recipe has been locked in our vault since 2018, but the view is completely free. 👇
+                
+                Drop your guess on what sauce this is in the comments. Best response gets it on the house this weekend.
+                
+                📍 [Your Local City Neighborhood]
+                
+                #LocalEats #FoodASMR #ChefLife #RestaurantSecrets #SatisfyingFood
+            </div>
+        </div>
+
+        <div class="modal-section" style="border:none; margin-bottom:0; padding-bottom:0;">
+            <h3>&#127916; Kitchen Production Instructions</h3>
+            <p style="font-size:0.9rem; margin:0; opacity:0.85;">Set up a smartphone on a stable tabletop tripod exactly 6 inches from the plating station. Use clean, directional studio macro lighting or natural daylight. Ensure all background cooling fans are completely powered down to isolate the crisp sound of the liquid texture breaking the surface. <strong>Do not add trending audio music in editing; rely purely on the native proximity audio track.</strong></p>
+        </div>
+    </div>
+  </div>
+
+<div class="calendar-container">
+    <h1 class="main-title">30-Day Algorithm Warm-Up Blueprint</h1>
+    <p class="subtitle">Aim For &bull; Maximum Retention, Saves, & Engagement Loops</p>
+
+        <div class="view-controls" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 25px;">
+        <button class="btn-toggle active" id="btnListView" style="margin-bottom: 0;">Weekly List View</button>
+        <button class="btn-toggle" id="btnGridView" style="margin-bottom: 0;">30-Day Grid View</button>
+          <div class="mockup-callout" style="font-size: 0.85rem; font-weight: 600; color: #26323b; background-color: rgba(38, 50, 59, 0.06); padding: 12px 14px; border-radius: 6px; border: 1px dashed rgba(38, 50, 59, 0.2); display: flex; flex-direction: column; gap: 4px; width: 100%; box-sizing: border-box; margin-top: 5px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span>✨</span> <strong>Interactive Mockup:</strong> Click Day 1 in either view to see a sample social copy blueprint.
+            </div>
+            <div style="font-size: 0.80rem; font-weight: 600; opacity: 0.95; padding-left: 22px;">
+            </div>
+            <div style="font-size: 0.80rem; font-weight: 600; opacity: 0.95; padding-left: 22px;">
+                Please note: This is a visual prototype, not a fully developed application.
+            </div>
+            <div style="font-size: 0.80rem; font-weight: 600; opacity: 0.95; padding-left: 22px;">
+                Clicking on Day 1 functions as a working proof of concept
+            </div>
+            <div style="font-size: 0.80rem; font-weight: 600; opacity: 0.95; padding-left: 22px;">
+                to demonstrate how the complete production tool will look and operate.
+            </div>
+        </div>
+    </div>
+
+
+    <div class="legend">
+        <div class="legend-item"><span class="color-dot" style="background-color: var(--instagram);"></span> Instagram</div>
+        <div class="legend-item"><span class="color-dot" style="background-color: var(--tiktok);"></span> TikTok</div>
+        <div class="legend-item"><span class="color-dot" style="background-color: var(--facebook);"></span> Facebook</div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: WEEKLY LIST VIEW                   -->
+    <!-- ========================================== -->
+    <div id="listViewSection" class="view-section active">
+        <!-- WEEK 1 -->
+        <div class="week-title">🚀 Week 1: The Activation Engine (Days 1 - 7)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Platform</th>
+                    <th>💡 Content Strategy & Format</th>
+                    <th>🎯 Algorithm Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="interactive-trigger open-preview-trigger">
+                    <td class="day-cell">Day 1 <span class="pulse-badge">Preview</span></td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The "ASMR Sauce Pour" <span style="font-weight:normal; opacity:0.7;">(Tight macro shot, raw kitchen sound)</span></td>
+                    <td class="target-cell">High Retention Loop</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 2</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Fry Tax Controversy <span style="font-weight:normal; opacity:0.7;">(Interactive Stories poll sticker)</span></td>
+                    <td class="target-cell">Instant Tap Signals</td>
+                </tr>
+<tr>
+                    <td class="day-cell">Day 3</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Perfect Order Guide <span style="font-weight:normal; opacity:0.7;">(Multi-slide budget graphic checklist)</span></td>
+                    <td class="target-cell">Save & Share Weights</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 4</td>
+                    <td class="platform-cell"><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Cheese Pull Test <span style="font-weight:normal; opacity:0.7;">(Macro depth-of-field video challenge)</span></td>
+                    <td class="target-cell">Completion Rate Boost</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 5</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The "Wrong Answers Only" Post <span style="font-weight:normal; opacity:0.7;">(Mystery menu item close-up)</span></td>
+                    <td class="target-cell">Keyboard Comment Volume</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 6</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Plating Aesthetic <span style="font-weight:normal; opacity:0.7;">(Fast-cut layered vertical video sequence)</span></td>
+                    <td class="target-cell">Fast-Paced Video Replays</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 7</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span></td>
+                    <td class="idea-cell">The Allergy Guide <span style="font-weight:normal; opacity:0.7;">(Clean static dietary matrix cheat-sheet)</span></td>
+                    <td class="target-cell">High-Utility Collection Saves</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- WEEK 2 -->
+        <div class="week-title">📈 Week 2: Trust & Momentum Building (Days 8 - 14)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Platform</th>
+                    <th>💡 Content Strategy & Format</th>
+                    <th>🎯 Algorithm Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="day-cell">Day 8</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Owner's 2018 Pivot <span style="font-weight:normal; opacity:0.7;">(Direct to camera execution backstory)</span></td>
+                    <td class="target-cell">Humanization / Authority</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 9</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Menu Matrix <span style="font-weight:normal; opacity:0.7;">(Vibe-based pairing breakdown grid)</span></td>
+                    <td class="target-cell">Direct External Sharing</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 10</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Ice Drop <span style="font-weight:normal; opacity:0.7;">(Ultra slow-mo splash B-roll sequence)</span></td>
+                    <td class="target-cell">Visual Stop-Scroll Frame</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 11</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The "This or That" Battle <span style="font-weight:normal; opacity:0.7;">(Two core menu options split image)</span></td>
+                    <td class="target-cell">Comment Interaction Loops</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 12</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The 5-Star Green Screen <span style="font-weight:normal; opacity:0.7;">(Dramatic review reading monologue)</span></td>
+                    <td class="target-cell">Hyper-Local Social Proof</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 13</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Interactive Menu Poll <span style="font-weight:normal; opacity:0.7;">(2018 Vault special item voting)</span></td>
+                    <td class="target-cell">Audience Response Frequency</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 14</td>
+                    <td class="platform-cell"><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Slicing Symphony <span style="font-weight:normal; opacity:0.7;">(Crunchy raw audio-focused tracking shot)</span></td>
+                    <td class="target-cell">Audio Profile Matching</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- WEEK 3 -->
+        <div class="week-title">📍 Week 3: Hyper-Local Dominance (Days 15 - 21)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Platform</th>
+                    <th>💡 Content Strategy & Format</th>
+                    <th>🎯 Algorithm Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="day-cell">Day 15</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Wine/Beer Pairing Cheat Sheet <span style="font-weight:normal; opacity:0.7;">(Retail drink cheat sheet)</span></td>
+                    <td class="target-cell">Evergreen Utility Saves</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 16</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The "If You Live In [City]" Hook <span style="font-weight:normal; opacity:0.7;">(Geotargeted front door reveal)</span></td>
+                    <td class="target-cell">Localized For You Page</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 17</td>
+                    <td class="platform-cell"><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Caption Contest <span style="font-weight:normal; opacity:0.7;">(Unprocessed, funny kitchen crew snapshot)</span></td>
+                    <td class="target-cell">Community Share Threads</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 18</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Sizzle Shot <span style="font-weight:normal; opacity:0.7;">(Flat-top cooking sequence with thermal steam)</span></td>
+                    <td class="target-cell">Repeat Video Replays</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 19</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The UGC Flip <span style="font-weight:normal; opacity:0.7;">(Native repurpose of customer profile story tags)</span></td>
+                    <td class="target-cell">Peer Authority Validation</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 20</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">Secret Flavor Pairing <span style="font-weight:normal; opacity:0.7;">(Curiosity science-focused food pairing tutorial)</span></td>
+                    <td class="target-cell">Curiosity Hold Metrics</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 21</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Shift Hand-Off <span style="font-weight:normal; opacity:0.7;">(Relatable kitchen vs floor team trend clip)</span></td>
+                    <td class="target-cell">High Distribution Velocity</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- WEEK 4 & CLOSING -->
+        <div class="week-title">🏁 Week 4 & Closing: Conversion Push (Days 22 - 30)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Platform</th>
+                    <th>💡 Content Strategy & Format</th>
+                    <th>🎯 Algorithm Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="day-cell">Day 22</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Home Cheat Code <span style="font-weight:normal; opacity:0.7;">(Kitchen ingredient preparation tip graphic)</span></td>
+                    <td class="target-cell">Value Extraction Saves</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 23</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Hidden Gem Callout <span style="font-weight:normal; opacity:0.7;">(Cozy interior atmosphere tracking video)</span></td>
+                    <td class="target-cell">Cold Discovery Matching</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 24</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Comment Response Video <span style="font-weight:normal; opacity:0.7;">(Native screen video reply layout)</span></td>
+                    <td class="target-cell">Direct Profile Trust Index</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 25</td>
+                    <td class="platform-cell"><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Bulk Prep Mix <span style="font-weight:normal; opacity:0.7;">(Rhythmic batch processing and kneading video)</span></td>
+                    <td class="target-cell">Process Watch-Time Hold</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 26</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Leftover Glow-Up <span style="font-weight:normal; opacity:0.7;">(Reheating process step-by-step layout)</span></td>
+                    <td class="target-cell">Post-Purchase Utility Boost</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 27</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The "Order Up" Bell <span style="font-weight:normal; opacity:0.7;">(Fast sequence edit of incoming dishes)</span></td>
+                    <td class="target-cell">Rapid Video Completion</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 28</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Event Calendar Hook <span style="font-weight:normal; opacity:0.7;">(Weekend activation/special announcement)</span></td>
+                    <td class="target-cell">Immediate Direct Traffic</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 29</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-tt">TikTok</span></td>
+                    <td class="idea-cell">The Deep Clean Glow-Up <span style="font-weight:normal; opacity:0.7;">(Satisfying stainless steel timelapse review)</span></td>
+                    <td class="target-cell">Cleanliness Interest Filters</td>
+                </tr>
+                <tr>
+                    <td class="day-cell">Day 30</td>
+                    <td class="platform-cell"><span class="badge badge-ig">Instagram</span><span class="badge badge-fb">Facebook</span></td>
+                    <td class="idea-cell">The Door-to-Table Experience <span style="font-weight:normal; opacity:0.7;">(Continuous POV sidewalk-to-table march)</span></td>
+                    <td class="target-cell">In-Person Dining Intent</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: 30-DAY GRID VIEW CONTAINER        -->
+    <!-- ========================================== -->
+    <div id="gridViewSection" class="view-section">
+        <div class="grid-view-container">
+  <!-- WEEK 1 CARDS -->
+            <div class="grid-day-card card-ig-tt interactive-trigger open-preview-trigger">
+                <div class="grid-day-number">DAY 1 <span class="pulse-badge">Preview</span></div>
+                <div class="grid-day-title">ASMR Sauce Pour</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 2</div>
+                <div class="grid-day-title">Fry Tax Controversy</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 3</div>
+                <div class="grid-day-title">Perfect Order Guide</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-tt-only">
+                <div class="grid-day-number">DAY 4</div>
+                <div class="grid-day-title">Cheese Pull Test</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 5</div>
+                <div class="grid-day-title">Wrong Answers Only</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 6</div>
+                <div class="grid-day-title">Plating Aesthetic</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-only">
+                <div class="grid-day-number">DAY 7</div>
+                <div class="grid-day-title">The Allergy Guide</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div></div>
+            </div>
+
+            <!-- WEEK 2 CARDS -->
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 8</div>
+                <div class="grid-day-title">Owner's 2018 Pivot</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 9</div>
+                <div class="grid-day-title">The Menu Matrix</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 10</div>
+                <div class="grid-day-title">The Ice Drop</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 11</div>
+                <div class="grid-day-title">This or That Battle</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 12</div>
+                <div class="grid-day-title">5-Star Green Screen</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 13</div>
+                <div class="grid-day-title">Interactive Menu Poll</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-tt-only">
+                <div class="grid-day-number">DAY 14</div>
+                <div class="grid-day-title">Slicing Symphony</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-tt"></div></div>
+            </div>
+
+            <!-- WEEK 3 CARDS -->
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 15</div>
+                <div class="grid-day-title">Pairing Cheat Sheet</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 16</div>
+                <div class="grid-day-title">"If You Live In..." Hook</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-fb-only">
+                <div class="grid-day-number">DAY 17</div>
+                <div class="grid-day-title">The Caption Contest</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 18</div>
+                <div class="grid-day-title">The Sizzle Shot</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 19</div>
+                <div class="grid-day-title">The UGC Flip</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 20</div>
+                <div class="grid-day-title">Secret Flavor Pairing</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 21</div>
+                <div class="grid-day-title">The Shift Hand-Off</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+
+            <!-- WEEK 4 CARDS -->
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 22</div>
+                <div class="grid-day-title">The Home Cheat Code</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 23</div>
+                <div class="grid-day-title">Hidden Gem Callout</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 24</div>
+                <div class="grid-day-title">Comment Reply Video</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-tt-only">
+                <div class="grid-day-number">DAY 25</div>
+                <div class="grid-day-title">The Bulk Prep Mix</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 26</div>
+                <div class="grid-day-title">The Leftover Glow-Up</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 27</div>
+                <div class="grid-day-title">The "Order Up" Bell</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 28</div>
+                <div class="grid-day-title">Event Calendar Hook</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-tt">
+                <div class="grid-day-number">DAY 29</div>
+                <div class="grid-day-title">Deep Clean Glow-Up</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-tt"></div></div>
+            </div>
+            <div class="grid-day-card card-ig-fb">
+                <div class="grid-day-number">DAY 30</div>
+                <div class="grid-day-title">Door-to-Table POV</div>
+                <div class="grid-platform-ribbons"><div class="ribbon ribbon-ig"></div><div class="ribbon ribbon-fb"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gatekeeper Elements
+        const overlay = document.getElementById('gatekeeperOverlay');
+        const engageBtn = document.getElementById('gatekeeperEngagedBtn');
+        const laterBtn = document.getElementById('gatekeeperLaterBtn');
+
+        function dismissOverlay() {
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        if (engageBtn) engageBtn.addEventListener('click', dismissOverlay);
+        if (laterBtn) laterBtn.addEventListener('click', dismissOverlay);
+
+        // Day 1 Preview Modal Logic
+        const dayOneModal = document.getElementById('dayOneModal');
+        const previewTriggers = document.querySelectorAll('.open-preview-trigger');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        function openModal(e) {
+            e.preventDefault();
+            if (dayOneModal) dayOneModal.classList.add('active');
+        }
+
+        function closeModal() {
+            if (dayOneModal) dayOneModal.classList.remove('active');
+        }
+
+        previewTriggers.forEach(trigger => {
+            trigger.addEventListener('click', openModal);
+        });
+
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        if (dayOneModal) {
+            dayOneModal.addEventListener('click', function(e) {
+                if (e.target === dayOneModal) closeModal();
+            });
+        }
+
+        // View Toggling Elements
+        const btnListView = document.getElementById('btnListView');
+        const btnGridView = document.getElementById('btnGridView');
+        const listViewSection = document.getElementById('listViewSection');
+        const gridViewSection = document.getElementById('gridViewSection');
+
+        if (btnListView && btnGridView && listViewSection && gridViewSection) {
+            btnListView.addEventListener('click', function() {
+                btnListView.classList.add('active');
+                btnGridView.classList.remove('active');
+                listViewSection.classList.add('active');
+                gridViewSection.classList.remove('active');
+            });
+
+            btnGridView.addEventListener('click', function() {
+                btnGridView.classList.add('active');
+                btnListView.classList.remove('active');
+                gridViewSection.classList.add('active');
+                listViewSection.classList.remove('active');
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
